@@ -128,6 +128,7 @@
     </Compile>
     <Compile Include="ModAuthoring\Project.cs" />
     <Compile Include="ModAuthoring\UI\ModPackagingFormVM.cs" />
+    <Compile Include="ModInstallAction.cs" />
     <Compile Include="ModManagement\ActivateMultipleModsTask.cs" />
     <Compile Include="ModManagement\AddProfileTask.cs" />
     <Compile Include="ModManagement\AutomaticDownloadTask.cs" />

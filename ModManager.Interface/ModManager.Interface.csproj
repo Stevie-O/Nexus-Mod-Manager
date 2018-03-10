@@ -127,6 +127,7 @@
     <Compile Include="ModManagement\InstallationLog\IniEdit.cs" />
     <Compile Include="ModManagement\InstallerGroup.cs" />
     <Compile Include="ModManagement\Delegates.cs" />
+    <Compile Include="ModManagement\ModConflictResolution.cs" />
     <Compile Include="ModManagement\OverwriteResult.cs" />
     <Compile Include="ModManagement\ProfileManager\IProfileManager.cs" />
     <Compile Include="ModManagement\Scripting\IDataFileUtil.cs" />
@@ -148,6 +149,7 @@
       <DependentUpon>SelectForm.cs</DependentUpon>
     </Compile>
     <Compile Include="ModManagement\VirtualModActivator\IModLinkInstaller.cs" />
+    <Compile Include="ModManagement\VirtualModActivator\IModLinkItemInstallData.cs" />
     <Compile Include="ModManagement\VirtualModActivator\IVirtualModActivator.cs" />
     <Compile Include="ModManagement\VirtualModActivator\IVirtualModInfo.cs" />
     <Compile Include="ModManagement\VirtualModActivator\IVirtualModLink.cs" />

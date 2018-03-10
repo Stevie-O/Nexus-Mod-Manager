@@ -37,12 +37,7 @@ namespace Nexus.Client.ModManagement
 		}
 
 		#endregion
-
-		public string AddFileLink(IMod p_modMod, string p_strBaseFilePath, string p_strSourceFile, bool p_booIsSwitching)
-		{
-			return AddFileLink(p_modMod, p_strBaseFilePath, p_strSourceFile, p_booIsSwitching, false);
-		}
-
+        
 		public string AddFileLink(IMod p_modMod, string p_strBaseFilePath, string p_strSourceFile, bool p_booIsSwitching, bool p_booHandlePlugin)
 		{
 			Int32 intPriority = 0;

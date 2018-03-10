@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using Nexus.Client.BackgroundTasks;
 using Nexus.Client.Games;
+using Nexus.Client.ModManagement.UI;
 using Nexus.Client.Mods;
 using Nexus.Client.PluginManagement;
 using Nexus.Client.UI;
@@ -13,243 +14,279 @@ using Nexus.Client.Util;
 
 namespace Nexus.Client.ModManagement
 {
-	public class LinkActivationTask : ThreadedBackgroundTask
-	{
-		bool m_booCancel = false;
+    public class LinkActivationTask : ThreadedBackgroundTask
+    {
+        bool m_booCancel = false;
 
-		#region Properties
+        #region Properties
 
-		/// <summary>
-		/// Gets the current ModManager.
-		/// </summary>
-		/// <value>The current ModManager.</value>
-		protected IPluginManager PluginManager { get; private set; }
+        /// <summary>
+        /// Gets the current ModManager.
+        /// </summary>
+        /// <value>The current ModManager.</value>
+        protected IPluginManager PluginManager { get; private set; }
 
-		/// <summary>
-		/// Gets the current ModManager.
-		/// </summary>
-		/// <value>The current ModManager.</value>
-		protected VirtualModActivator VirtualModActivator { get; private set; }
+        /// <summary>
+        /// Gets the current ModManager.
+        /// </summary>
+        /// <value>The current ModManager.</value>
+        protected VirtualModActivator VirtualModActivator { get; private set; }
 
-		protected ConfirmActionMethod ConfirmActionMethod { get; private set; }
+        protected ConfirmActionMethod ConfirmActionMethod { get; private set; }
 
-		protected bool MultiHDMode
-		{
-			get
-			{
-				return VirtualModActivator.MultiHDMode;
-			}
-		}
+        protected bool MultiHDMode
+        {
+            get
+            {
+                return VirtualModActivator.MultiHDMode;
+            }
+        }
 
-		protected IMod Mod { get; private set; }
+        protected IMod Mod { get; private set; }
 
-		protected bool Disabling { get; private set; }
+        protected bool Disabling { get; private set; }
 
-		#endregion
+        #endregion
 
-		#region Constructors
+        #region Constructors
 
-		/// <summary>
-		/// A simple constructor that initializes the object with its dependencies.
-		/// </summary>
-		/// <param name="p_ModManager">The current ModManager.</param>
-		/// <param name="p_lstMods">The mod list.</param>
-		/// <param name="p_intNewValue">The new category id.</param>
-		public LinkActivationTask(IPluginManager p_pmgPluginManager, VirtualModActivator p_vmaVirtualModActivator, IMod p_modMod, bool p_booDisable, ConfirmActionMethod p_camConfirm)
-		{
-			PluginManager = p_pmgPluginManager;
-			VirtualModActivator = p_vmaVirtualModActivator;
-			Mod = p_modMod;
-			Disabling = p_booDisable;
-			ConfirmActionMethod = p_camConfirm;
-		}
+        /// <summary>
+        /// A simple constructor that initializes the object with its dependencies.
+        /// </summary>
+        /// <param name="p_ModManager">The current ModManager.</param>
+        /// <param name="p_lstMods">The mod list.</param>
+        /// <param name="p_intNewValue">The new category id.</param>
+        public LinkActivationTask(IPluginManager p_pmgPluginManager, VirtualModActivator p_vmaVirtualModActivator, IMod p_modMod, bool p_booDisable, ConfirmActionMethod p_camConfirm)
+        {
+            PluginManager = p_pmgPluginManager;
+            VirtualModActivator = p_vmaVirtualModActivator;
+            Mod = p_modMod;
+            Disabling = p_booDisable;
+            ConfirmActionMethod = p_camConfirm;
+        }
 
-		#endregion
+        #endregion
 
-		#region Event Raising
+        #region Event Raising
 
-		/// <summary>
-		/// Raises the <see cref="IBackgroundTask.TaskEnded"/> event.
-		/// </summary>
-		/// <param name="e">A <see cref="TaskEndedEventArgs"/> describing the event arguments.</param>
-		protected override void OnTaskEnded(TaskEndedEventArgs e)
-		{
-			base.OnTaskEnded(e);
-		}
-		#endregion
+        /// <summary>
+        /// Raises the <see cref="IBackgroundTask.TaskEnded"/> event.
+        /// </summary>
+        /// <param name="e">A <see cref="TaskEndedEventArgs"/> describing the event arguments.</param>
+        protected override void OnTaskEnded(TaskEndedEventArgs e)
+        {
+            base.OnTaskEnded(e);
+        }
+        #endregion
 
-		/// <summary>
-		/// Starts the update.
-		/// </summary>
-		/// <param name="p_camConfirm">The delegate to call to confirm an action.</param>
-		public void Update(ConfirmActionMethod p_camConfirm)
-		{
-			Start(p_camConfirm);
-		}
+        /// <summary>
+        /// Starts the update.
+        /// </summary>
+        /// <param name="p_camConfirm">The delegate to call to confirm an action.</param>
+        public void Update(ConfirmActionMethod p_camConfirm)
+        {
+            Start(p_camConfirm);
+        }
 
-		/// <summary>
-		/// Resumes the task.
-		/// </summary>
-		/// <exception cref="InvalidOperationException">Thrown if the task is not paused.</exception>
-		public override void Resume()
-		{
-			Update(ConfirmActionMethod);
-		}
+        /// <summary>
+        /// Resumes the task.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">Thrown if the task is not paused.</exception>
+        public override void Resume()
+        {
+            Update(ConfirmActionMethod);
+        }
 
-		/// <summary>
-		/// Cancels the update.
-		/// </summary>
-		public override void Cancel()
-		{
-			base.Cancel();
-			m_booCancel = true;
-		}
+        /// <summary>
+        /// Cancels the update.
+        /// </summary>
+        public override void Cancel()
+        {
+            base.Cancel();
+            m_booCancel = true;
+        }
 
-		/// <summary>
-		/// The method that is called to start the backgound task.
-		/// </summary>
-		/// <param name="p_objArgs">Arguments to for the task execution.</param>
-		/// <returns>Always <c>null</c>.</returns>
-		protected override object DoWork(object[] p_objArgs)
-		{
-			ConfirmActionMethod camConfirm = (ConfirmActionMethod)p_objArgs[0];
-			bool booLotsOfLinks = false;
-			int intProgress = 0;
-			double dblRatio = 0;
+        void ActivatePluginIfNeeded(string strFileLink)
+        {
+            if (!string.IsNullOrEmpty(strFileLink))
+                if (PluginManager != null)
+                    if (PluginManager.IsActivatiblePluginFile(strFileLink))
+                    {
+                        PluginManager.AddPlugin(strFileLink);
+                        PluginManager.ActivatePlugin(strFileLink);
+                    }
+        }
 
-			OverallMessage = String.Format("{0} Mod Links: {1}", Disabling ? "Disabling" : "Activating", Mod.ModName);
-			ItemMessage = String.Format("{0}...", Disabling ? "Disabling" : "Activating");
-			OverallProgress = 0;
-			OverallProgressStepSize = 1;
-			OverallProgressMaximum = 1;
-			ShowItemProgress = true;
-			ItemProgress = 0;
+        /// <summary>
+        /// The method that is called to start the backgound task.
+        /// </summary>
+        /// <param name="p_objArgs">Arguments to for the task execution.</param>
+        /// <returns>Always <c>null</c>.</returns>
+        protected override object DoWork(object[] p_objArgs)
+        {
+            ConfirmActionMethod camConfirm = (ConfirmActionMethod)p_objArgs[0];
+            bool booLotsOfLinks = false;
+            int intProgress = 0;
+            double dblRatio = 0;
 
-			if (!Disabling)
-			{
-				string strModFilenamePath = Path.Combine(VirtualModActivator.VirtualPath, Path.GetFileNameWithoutExtension(Mod.Filename));
-				string strLinkFilenamePath = MultiHDMode ? Path.Combine(VirtualModActivator.HDLinkFolder, Path.GetFileNameWithoutExtension(Mod.Filename)) : string.Empty;
-				string strModDownloadIDPath = (string.IsNullOrWhiteSpace(Mod.DownloadId) || (Mod.DownloadId.Length <= 1) || Mod.DownloadId.Equals("-1", StringComparison.OrdinalIgnoreCase)) ? string.Empty : Path.Combine(VirtualModActivator.VirtualPath, Mod.DownloadId);
-				string strLinkDownloadIDPath = MultiHDMode ? ((string.IsNullOrWhiteSpace(Mod.DownloadId) || (Mod.DownloadId.Length <= 1) || Mod.DownloadId.Equals("-1", StringComparison.OrdinalIgnoreCase)) ? string.Empty : Path.Combine(VirtualModActivator.HDLinkFolder, Mod.DownloadId)) : string.Empty;
-				string strModFolderPath = strModFilenamePath;
-				string strLinkFolderPath = strLinkFilenamePath;
+            OverallMessage = String.Format("{0} Mod Links: {1}", Disabling ? "Disabling" : "Activating", Mod.ModName);
+            ItemMessage = String.Format("{0}...", Disabling ? "Disabling" : "Activating");
+            OverallProgress = 0;
+            OverallProgressStepSize = 1;
+            OverallProgressMaximum = 1;
+            ShowItemProgress = true;
+            ItemProgress = 0;
 
-				if (!string.IsNullOrWhiteSpace(strModDownloadIDPath) && Directory.Exists(strModDownloadIDPath))
-					strModFolderPath = strModDownloadIDPath;
+            if (!Disabling)
+            {
+                string strModFilenamePath = Path.Combine(VirtualModActivator.VirtualPath, Path.GetFileNameWithoutExtension(Mod.Filename));
+                string strLinkFilenamePath = MultiHDMode ? Path.Combine(VirtualModActivator.HDLinkFolder, Path.GetFileNameWithoutExtension(Mod.Filename)) : string.Empty;
+                string strModDownloadIDPath = (string.IsNullOrWhiteSpace(Mod.DownloadId) || (Mod.DownloadId.Length <= 1) || Mod.DownloadId.Equals("-1", StringComparison.OrdinalIgnoreCase)) ? string.Empty : Path.Combine(VirtualModActivator.VirtualPath, Mod.DownloadId);
+                string strLinkDownloadIDPath = MultiHDMode ? ((string.IsNullOrWhiteSpace(Mod.DownloadId) || (Mod.DownloadId.Length <= 1) || Mod.DownloadId.Equals("-1", StringComparison.OrdinalIgnoreCase)) ? string.Empty : Path.Combine(VirtualModActivator.HDLinkFolder, Mod.DownloadId)) : string.Empty;
+                string strModFolderPath = strModFilenamePath;
+                string strLinkFolderPath = strLinkFilenamePath;
 
-				if (MultiHDMode && (!string.IsNullOrWhiteSpace(strLinkDownloadIDPath) && Directory.Exists(strLinkDownloadIDPath)))
-					strLinkFolderPath = strLinkDownloadIDPath;
+                if (!string.IsNullOrWhiteSpace(strModDownloadIDPath) && Directory.Exists(strModDownloadIDPath))
+                    strModFolderPath = strModDownloadIDPath;
 
-				if (Directory.Exists(strModFolderPath) || (MultiHDMode && Directory.Exists(strLinkFolderPath)))
-				{
-					string[] strFiles = null;
-					
-					if (MultiHDMode && Directory.Exists(strLinkFolderPath))
-					{
-						if (Directory.Exists(strModFolderPath))
-							strFiles = Directory.GetFiles(strLinkFolderPath, "*", SearchOption.AllDirectories).Concat(Directory.GetFiles(strModFolderPath, "*", SearchOption.AllDirectories)).ToArray();
-						else
-							strFiles = Directory.GetFiles(strLinkFolderPath, "*", SearchOption.AllDirectories);
-					}
-					else
-						strFiles = Directory.GetFiles(strModFolderPath, "*", SearchOption.AllDirectories);
+                if (MultiHDMode && (!string.IsNullOrWhiteSpace(strLinkDownloadIDPath) && Directory.Exists(strLinkDownloadIDPath)))
+                    strLinkFolderPath = strLinkDownloadIDPath;
 
-					if (strFiles.Length <= 1000)
-					{
-						ItemProgressMaximum = strFiles.Length;
-						ItemProgressStepSize = 1;
-					}
-					else
-					{
-						ItemProgressMaximum = 1000;
-						booLotsOfLinks = true;
-						dblRatio = 1000 / strFiles.Length;
-					}
+                if (Directory.Exists(strModFolderPath) || (MultiHDMode && Directory.Exists(strLinkFolderPath)))
+                {
+                    string[] strFiles = null;
 
-					if (strFiles.Length > 0)
-					{
-						IModLinkInstaller ModLinkInstaller = VirtualModActivator.GetModLinkInstaller();
+                    if (MultiHDMode && Directory.Exists(strLinkFolderPath))
+                    {
+                        if (Directory.Exists(strModFolderPath))
+                            strFiles = Directory.GetFiles(strLinkFolderPath, "*", SearchOption.AllDirectories).Concat(Directory.GetFiles(strModFolderPath, "*", SearchOption.AllDirectories)).ToArray();
+                        else
+                            strFiles = Directory.GetFiles(strLinkFolderPath, "*", SearchOption.AllDirectories);
+                    }
+                    else
+                        strFiles = Directory.GetFiles(strModFolderPath, "*", SearchOption.AllDirectories);
 
-						foreach (string File in strFiles)
-						{
-							//if (m_booCancel)
-							//	break;
-							ItemMessage = string.Format("{0}: {1}", Disabling ? "Disabling" : "Activating", File);
+                    if (strFiles.Length <= 1000)
+                    {
+                        ItemProgressMaximum = strFiles.Length;
+                        ItemProgressStepSize = 1;
+                    }
+                    else
+                    {
+                        ItemProgressMaximum = 1000;
+                        booLotsOfLinks = true;
+                        dblRatio = 1000 / strFiles.Length;
+                    }
 
-							string strFile = string.Empty;
+                    if (strFiles.Length > 0)
+                    {
+                        IModLinkInstaller ModLinkInstaller = VirtualModActivator.GetModLinkInstaller();
+                        // things we need to ask the user about
+                        List<IModLinkItemInstallData> conflictItems = new List<IModLinkItemInstallData>();
 
-							if (MultiHDMode && File.Contains(strLinkFolderPath))
-								strFile = File.Replace((strLinkFolderPath + Path.DirectorySeparatorChar), string.Empty);
-							else
-								strFile = File.Replace((strModFolderPath + Path.DirectorySeparatorChar), string.Empty);
+                        foreach (string File in strFiles)
+                        {
+                            //if (m_booCancel)
+                            //	break;
+                            ItemMessage = string.Format("{0}: {1}", Disabling ? "Disabling" : "Activating", File);
 
-							string strFileLink = ModLinkInstaller.AddFileLink(Mod, strFile, null, false);
+                            string strFile = string.Empty;
 
-							if (!string.IsNullOrEmpty(strFileLink))
-								if (PluginManager != null)
-									if (PluginManager.IsActivatiblePluginFile(strFileLink))
-									{
-										PluginManager.AddPlugin(strFileLink);
-										PluginManager.ActivatePlugin(strFileLink);
-									}
+                            if (MultiHDMode && File.Contains(strLinkFolderPath))
+                                strFile = File.Replace((strLinkFolderPath + Path.DirectorySeparatorChar), string.Empty);
+                            else
+                                strFile = File.Replace((strModFolderPath + Path.DirectorySeparatorChar), string.Empty);
 
-							if (ItemProgress < ItemProgressMaximum)
-							{
-								if (booLotsOfLinks)
-									ItemProgress = (int)Math.Floor(++intProgress * dblRatio);
-								else
-									StepItemProgress();
-							}
-						}
+                            var itemData = ModLinkInstaller.GetInstallData(Mod, strFile, null, false);
+                            if (itemData == null || !itemData.ConflictResolutionNeeded)
+                            {
+                                if (itemData != null)
+                                {
+                                    string strFileLink = ModLinkInstaller.InstallItem(itemData);
+                                    ActivatePluginIfNeeded(strFileLink);
+                                }
+                                if (ItemProgress < ItemProgressMaximum)
+                                {
+                                    if (booLotsOfLinks)
+                                        ItemProgress = (int)Math.Floor(++intProgress * dblRatio);
+                                    else
+                                        StepItemProgress();
+                                }
+                            }
+                            else
+                                conflictItems.Add(itemData);
+                        }
 
-						VirtualModActivator.FinalizeModActivation(Mod);
-					}
+                        if (conflictItems.Count > 0)
+                        {
+                            using (var dlg = new ConflictResolutionDlg(Mod, conflictItems))
+                            {
+                                dlg.ShowDialog();
+                                dlg.ApplySelections();
+                            }
+                            // temporary hack
+                            foreach (var item in conflictItems)
+                            {
+                                string strFileLink = ModLinkInstaller.InstallItem(item);
+                                ActivatePluginIfNeeded(strFileLink);
+                                if (ItemProgress < ItemProgressMaximum)
+                                {
+                                    if (booLotsOfLinks)
+                                        ItemProgress = (int)Math.Floor(++intProgress * dblRatio);
+                                    else
+                                        StepItemProgress();
+                                }
+                            }
+                        }
 
-				}
-			}
-			else
-			{
-				if (Mod != null)
-				{
-					List<IVirtualModLink> ivlLinks = VirtualModActivator.VirtualLinks.Where(x => (x.ModInfo != null) && (x.ModInfo.ModFileName.ToLowerInvariant() == Path.GetFileName(Mod.Filename).ToLowerInvariant())).ToList();
-					if ((ivlLinks != null) && (ivlLinks.Count > 0))
-					{
-						if (ivlLinks.Count <= 1000)
-						{
-							ItemProgressMaximum = ivlLinks.Count;
-							ItemProgressStepSize = 1;
-						}
-						else
-						{
-							ItemProgressMaximum = 1000;
-							booLotsOfLinks = true;
-							dblRatio = 1000 / ivlLinks.Count;
-						}
+                        VirtualModActivator.FinalizeModActivation(Mod);
+                    }
 
-						foreach (IVirtualModLink Link in ivlLinks)
-						{
-							ItemMessage = string.Format("{0}: {1}", Disabling ? "Disabling" : "Activating", Link.VirtualModPath);
-							VirtualModActivator.RemoveFileLink(Link, Mod);
+                }
+            }
+            else
+            {
+                if (Mod != null)
+                {
+                    List<IVirtualModLink> ivlLinks = VirtualModActivator.VirtualLinks.Where(x => (x.ModInfo != null) && (x.ModInfo.ModFileName.ToLowerInvariant() == Path.GetFileName(Mod.Filename).ToLowerInvariant())).ToList();
+                    if ((ivlLinks != null) && (ivlLinks.Count > 0))
+                    {
+                        if (ivlLinks.Count <= 1000)
+                        {
+                            ItemProgressMaximum = ivlLinks.Count;
+                            ItemProgressStepSize = 1;
+                        }
+                        else
+                        {
+                            ItemProgressMaximum = 1000;
+                            booLotsOfLinks = true;
+                            dblRatio = 1000 / ivlLinks.Count;
+                        }
 
-							if (ItemProgress < ItemProgressMaximum)
-							{
-								if (booLotsOfLinks)
-									ItemProgress = (int)Math.Floor(++intProgress * dblRatio);
-								else
-									StepItemProgress();
-							}
-						}
-					}
+                        foreach (IVirtualModLink Link in ivlLinks)
+                        {
+                            ItemMessage = string.Format("{0}: {1}", Disabling ? "Disabling" : "Activating", Link.VirtualModPath);
+                            VirtualModActivator.RemoveFileLink(Link, Mod);
 
-					VirtualModActivator.FinalizeModDeactivation(Mod);
-				}
-			}
+                            if (ItemProgress < ItemProgressMaximum)
+                            {
+                                if (booLotsOfLinks)
+                                    ItemProgress = (int)Math.Floor(++intProgress * dblRatio);
+                                else
+                                    StepItemProgress();
+                            }
+                        }
+                    }
+
+                    VirtualModActivator.FinalizeModDeactivation(Mod);
+                }
+            }
 
 
-			if (OverallProgress < OverallProgressMaximum)
-				StepOverallProgress();
+            if (OverallProgress < OverallProgressMaximum)
+                StepOverallProgress();
 
-			return null;
-		}
-	}
+            return null;
+        }
+    }
 }

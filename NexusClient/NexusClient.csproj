@@ -146,6 +146,12 @@
     <Compile Include="ModManagement\BackupManager\RestoreBackupForm .Designer.cs" />
     <Compile Include="ModManagement\BackupManager\RestoreBackupTask.cs" />
     <Compile Include="ModManagement\CheckOnlineProfileIntegrityTask.cs" />
+    <Compile Include="ModManagement\UI\ConflictResolutionDlg.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ModManagement\UI\ConflictResolutionDlg.Designer.cs">
+      <DependentUpon>ConflictResolutionDlg.cs</DependentUpon>
+    </Compile>
     <Compile Include="ModManagement\DeleteMultipleModsTask.cs" />
     <Compile Include="ModManagement\DisableMultipleModsTask.cs" />
     <Compile Include="ModManagement\InstallationLog\InstallLog.DummyMod.cs" />
@@ -168,6 +174,9 @@
     <Compile Include="ModManagement\ProfileManager\RenameBackedProfileTask.cs" />
     <Compile Include="ModManagement\ProfileManager\ToggleSharingProfileTask.cs" />
     <Compile Include="ModManagement\ToggleModUpdateChecksTask.cs" />
+    <Compile Include="ModManagement\UI\FixedTreeView.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="ModManagement\UI\ModManagerControl.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -212,6 +221,9 @@
     <EmbeddedResource Include="ModActivationMonitor\UI\ModActivationMonitorControl.resx" />
     <EmbeddedResource Include="ModManagement\BackupManager\BackupManagerForm.resx" />
     <EmbeddedResource Include="ModManagement\BackupManager\RestoreBackupForm .resx" />
+    <EmbeddedResource Include="ModManagement\UI\ConflictResolutionDlg.resx">
+      <DependentUpon>ConflictResolutionDlg.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Settings\UI\DownloadSettingsPage.resx">
       <DependentUpon>DownloadSettingsPage.cs</DependentUpon>
       <SubType>Designer</SubType>
